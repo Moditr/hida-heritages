@@ -28,11 +28,12 @@ USER_AGENT = "HidaHeritagesBot/0.1 (https://github.com/Moditr/hida-heritages) py
 # (un auteur avec deux nationalités africaines sortirait deux fois).
 REQUETE = """
 SELECT DISTINCT ?auteur ?auteurLabel ?influence ?influenceLabel WHERE {
-  ?auteur wdt:P31 wd:Q5 ;
-          wdt:P106 wd:Q36180 ;
-          wdt:P27 ?pays ;
-          wdt:P737 ?influence .
+  hint:Query hint:optimizer "None" .
+  ?auteur wdt:P737 ?influence .
+  ?auteur wdt:P27 ?pays .
   ?pays wdt:P30 wd:Q15 .
+  ?auteur wdt:P106 wd:Q36180 .
+  ?auteur wdt:P31 wd:Q5 .
   SERVICE wikibase:label { bd:serviceParam wikibase:language "fr,en". }
 }
 """
