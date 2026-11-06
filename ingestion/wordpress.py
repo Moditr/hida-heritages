@@ -21,6 +21,7 @@ USER_AGENT = "HidaHeritagesBot/0.1 (https://github.com/Moditr/hida-heritages) py
 
 # Les champs utiles des articles. Le reste (réglages Jetpack, liens techniques) est du bruit.
 CHAMPS_ARTICLES = "id,date,modified,slug,link,title,excerpt,content,categories,author"
+CHAMPS_RUBRIQUES = "id,name,slug,link,description,count,parent"
 
 PAR_PAGE = 100  # le maximum autorisé par WordPress
 ESSAIS = 3
@@ -67,7 +68,7 @@ def extraire_articles() -> list:
 
 def extraire_rubriques() -> list:
     """Récupère toutes les rubriques (il y en a moins de 100 : une seule page suffit)."""
-    return appeler("categories", {"per_page": PAR_PAGE}).json()
+    return appeler("categories", {"per_page": PAR_PAGE, "_fields": CHAMPS_RUBRIQUES}).json()
 
 
 # --- Lancement --------------------------------------------------------------------

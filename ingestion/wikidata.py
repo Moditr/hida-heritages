@@ -22,14 +22,18 @@ USER_AGENT = "HidaHeritagesBot/0.1 (https://github.com/Moditr/hida-heritages) py
 # On part du plus petit tas (les personnes qui ont un « influencé par »), puis on filtre.
 # DISTINCT retire les doublons parasites (un auteur avec deux nationalités africaines).
 REQUETE = """
-SELECT DISTINCT ?auteur ?auteurLabel ?influence ?influenceLabel WHERE {
+SELECT DISTINCT ?auteur (STR(?auteurLabel) AS ?auteur_nom) ?influence (STR(?influenceLabel) AS ?influence_nom) WHERE {
   hint:Query hint:optimizer "None" .
   ?auteur wdt:P737 ?influence .
   ?auteur wdt:P27 ?pays .
   ?pays wdt:P30 wd:Q15 .
   ?auteur wdt:P106 wd:Q36180 .
   ?auteur wdt:P31 wd:Q5 .
-  SERVICE wikibase:label { bd:serviceParam wikibase:language "fr,en". }
+  SERVICE wikibase:label {
+    bd:serviceParam wikibase:language "fr,en" .
+    ?auteur rdfs:label ?auteurLabel .
+    ?influence rdfs:label ?influenceLabel .
+  }
 }
 """
 
@@ -64,7 +68,7 @@ def extraire() -> dict:
 if __name__ == "__main__":
     donnees = extraire()
     lignes = donnees["results"]["bindings"]
-    chemin = ecrire_brut(donnees, "wikidata", "auteurs.json")
+    chemin = ecrire_brut(lignes, "wikidata", "auteurs.json")
 
     auteurs = {ligne["auteur"]["value"] for ligne in lignes}
     print(f"{len(lignes)} liens d'héritage récupérés, pour {len(auteurs)} auteurs différents.")
