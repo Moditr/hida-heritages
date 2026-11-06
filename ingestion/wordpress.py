@@ -3,17 +3,16 @@
 Ce que fait ce script :
 1. il récupère tous les articles du site, page par page, via l'API de WordPress ;
 2. il récupère la liste des rubriques ;
-3. il enregistre les deux réponses telles quelles, rangées par source et par date.
+3. il enregistre les deux réponses telles quelles dans Cloud Storage, rangées par source et par date.
 
 Lancement, depuis la racine du dépôt :  python ingestion/wordpress.py
 """
 
-import json
 import time
-from datetime import date
-from pathlib import Path
 
 import requests
+
+from stockage import ecrire_brut
 
 # --- Réglages -----------------------------------------------------------------
 
@@ -26,7 +25,6 @@ CHAMPS_ARTICLES = "id,date,modified,slug,link,title,excerpt,content,categories,a
 PAR_PAGE = 100  # le maximum autorisé par WordPress
 ESSAIS = 3
 ATTENTE_DEPART = 5
-DOSSIER_BRUT = Path("data/raw")
 
 
 # --- Une demande à l'API, avec relances ------------------------------------------
@@ -51,7 +49,7 @@ def appeler(chemin: str, parametres: dict) -> requests.Response:
             time.sleep(attente)
 
 
-# --- Étape 1 : extraire -----------------------------------------------------------
+# --- Extraire -------------------------------------------------------------------
 
 def extraire_articles() -> list:
     """Récupère tous les articles, page par page."""
@@ -72,24 +70,13 @@ def extraire_rubriques() -> list:
     return appeler("categories", {"per_page": PAR_PAGE}).json()
 
 
-# --- Étape 2 : sauvegarder ----------------------------------------------------------
-
-def sauvegarder(donnees: list, nom_fichier: str) -> Path:
-    """Écrit la réponse brute dans un fichier daté. Relancer le même jour REMPLACE le fichier."""
-    chemin = DOSSIER_BRUT / "source=wordpress" / f"date={date.today().isoformat()}" / nom_fichier
-    chemin.parent.mkdir(parents=True, exist_ok=True)
-    with chemin.open("w", encoding="utf-8") as fichier:
-        json.dump(donnees, fichier, ensure_ascii=False, indent=2)
-    return chemin
-
-
 # --- Lancement --------------------------------------------------------------------
 
 if __name__ == "__main__":
     articles = extraire_articles()
     rubriques = extraire_rubriques()
-    chemin_articles = sauvegarder(articles, "articles.json")
-    chemin_rubriques = sauvegarder(rubriques, "rubriques.json")
+    chemin_articles = ecrire_brut(articles, "wordpress", "articles.json")
+    chemin_rubriques = ecrire_brut(rubriques, "wordpress", "rubriques.json")
 
     en_anglais = sum(1 for article in articles if "/en/" in article["link"])
     print(f"{len(articles)} articles ({len(articles) - en_anglais} en français, {en_anglais} en anglais).")
